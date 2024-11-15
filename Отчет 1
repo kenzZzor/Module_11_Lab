@@ -1,0 +1,223 @@
++------------------+          +------------------+
+|      Book        |          |      Reader      |
+|------------------|          |------------------|
+| - Title: string  |          | - Id: int        |
+| - Author: string |<>------- | - Name: string   |
+| - ISBN: string   |          | - Email: string  |
+| - IsAvailable: bool|        +------------------+
+|------------------|          | + BorrowBook()   |
+| + MarkAsLoaned() |          | + ReturnBook()   |
+| + MarkAsAvailable()|        +------------------+
++------------------+
+
++------------------+          +------------------+
+|    Librarian     |          |      Loan        |
+|------------------|<>------- |------------------|
+| - Id: int        |          | - Book: Book     |
+| - Name: string   |<>------- | - Reader: Reader |
+| - Position: string|         | - LoanDate: Date |
+|------------------|          | - ReturnDate: Date|
+| + AddBook()      |          +------------------+
+| + RemoveBook()   |          | + IssueLoan()    |
++------------------+          | + CompleteLoan() |
+                              +------------------+
+
+
+//// 1. Диаграмма классов
+Диаграмма классов была приведена выше в текстовом формате UML. Она включает четыре основных класса: Book, Reader, Librarian, Loan. Их взаимосвязи реализованы через свойства и методы.
+
+//// 2. Описание системы
+Основные классы:
+1.Book:
+Представляет книгу в библиотеке.
+Свойства: Title, Author, ISBN, IsAvailable.
+Методы: MarkAsLoaned() (пометить книгу как занятую), MarkAsAvailable() (сделать книгу доступной).
+
+2.Reader:
+Представляет читателя.
+Свойства: Id, Name, Email.
+Методы: BorrowBook() (взять книгу), ReturnBook() (вернуть книгу).
+
+3.Librarian:
+Представляет библиотекаря.
+Свойства: Id, Name, Position.
+Методы: AddBook() (добавить книгу в библиотеку), RemoveBook() (удалить книгу).
+
+4.Loan:
+Представляет выдачу книги.
+Свойства: Book, Reader, LoanDate, ReturnDate.
+Методы: IssueLoan() (выдать книгу), CompleteLoan() (завершить выдачу).
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Код на языке C#:
+using System;
+using System.Collections.Generic;
+
+class Book
+{
+    public string Title { get; private set; }
+    public string Author { get; private set; }
+    public string ISBN { get; private set; }
+    public bool IsAvailable { get; private set; }
+
+    public Book(string title, string author, string isbn)
+    {
+        Title = title;
+        Author = author;
+        ISBN = isbn;
+        IsAvailable = true;
+    }
+
+    public void MarkAsLoaned()
+    {
+        IsAvailable = false;
+    }
+
+    public void MarkAsAvailable()
+    {
+        IsAvailable = true;
+    }
+
+    public override string ToString()
+    {
+        return $"{Title} by {Author} (ISBN: {ISBN}) - {(IsAvailable ? "Available" : "Not Available")}";
+    }
+}
+
+class Reader
+{
+    public int Id { get; private set; }
+    public string Name { get; private set; }
+    public string Email { get; private set; }
+
+    public Reader(int id, string name, string email)
+    {
+        Id = id;
+        Name = name;
+        Email = email;
+    }
+
+    public void BorrowBook(Book book)
+    {
+        if (book.IsAvailable)
+        {
+            book.MarkAsLoaned();
+            Console.WriteLine($"{Name} borrowed '{book.Title}'.");
+        }
+        else
+        {
+            Console.WriteLine($"'{book.Title}' is not available.");
+        }
+    }
+
+    public void ReturnBook(Book book)
+    {
+        book.MarkAsAvailable();
+        Console.WriteLine($"{Name} returned '{book.Title}'.");
+    }
+}
+
+class Librarian
+{
+    public int Id { get; private set; }
+    public string Name { get; private set; }
+    public string Position { get; private set; }
+
+    private List<Book> books;
+
+    public Librarian(int id, string name, string position)
+    {
+        Id = id;
+        Name = name;
+        Position = position;
+        books = new List<Book>();
+    }
+
+    public void AddBook(Book book)
+    {
+        books.Add(book);
+        Console.WriteLine($"Librarian {Name} added '{book.Title}' to the library.");
+    }
+
+    public void RemoveBook(Book book)
+    {
+        if (books.Contains(book))
+        {
+            books.Remove(book);
+            Console.WriteLine($"Librarian {Name} removed '{book.Title}' from the library.");
+        }
+        else
+        {
+            Console.WriteLine($"'{book.Title}' not found in the library.");
+        }
+    }
+
+    public void ShowBooks()
+    {
+        Console.WriteLine("Library books:");
+        foreach (var book in books)
+        {
+            Console.WriteLine(book);
+        }
+    }
+}
+
+class Loan
+{
+    public Book Book { get; private set; }
+    public Reader Reader { get; private set; }
+    public DateTime LoanDate { get; private set; }
+    public DateTime? ReturnDate { get; private set; }
+
+    public Loan(Book book, Reader reader)
+    {
+        Book = book;
+        Reader = reader;
+        LoanDate = DateTime.Now;
+        ReturnDate = null;
+    }
+
+    public void IssueLoan()
+    {
+        Reader.BorrowBook(Book);
+    }
+
+    public void CompleteLoan()
+    {
+        ReturnDate = DateTime.Now;
+        Reader.ReturnBook(Book);
+    }
+
+    public override string ToString()
+    {
+        return $"Loan of '{Book.Title}' to {Reader.Name} on {LoanDate:d}" +
+               (ReturnDate != null ? $", returned on {ReturnDate:d}" : ", not yet returned.");
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Создаем библиотекаря, книги и читателя
+        Librarian librarian = new Librarian(1, "Alice", "Head Librarian");
+        Book book1 = new Book("1984", "George Orwell", "1234567890");
+        Book book2 = new Book("To Kill a Mockingbird", "Harper Lee", "0987654321");
+
+        librarian.AddBook(book1);
+        librarian.AddBook(book2);
+        librarian.ShowBooks();
+
+        Reader reader = new Reader(1, "John Doe", "john.doe@example.com");
+
+        // Читатель берет книгу
+        Loan loan = new Loan(book1, reader);
+        loan.IssueLoan();
+
+        // Читатель возвращает книгу
+        loan.CompleteLoan();
+        librarian.ShowBooks();
+    }
+}
